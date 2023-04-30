@@ -1,5 +1,6 @@
 package com.bachtt.bshop.controllers;
 
+import com.bachtt.bshop.dto.request.ChangeAvatar;
 import com.bachtt.bshop.dto.request.SignInForm;
 import com.bachtt.bshop.dto.request.SignUpForm;
 import com.bachtt.bshop.dto.response.JwtResponse;
@@ -8,6 +9,7 @@ import com.bachtt.bshop.models.Role;
 import com.bachtt.bshop.models.RoleName;
 import com.bachtt.bshop.models.User;
 import com.bachtt.bshop.security.jwt.JwtProvider;
+import com.bachtt.bshop.security.jwt.JwtTokenFilter;
 import com.bachtt.bshop.security.userpincal.UserPrinciple;
 import com.bachtt.bshop.services.impl.RoleServiceImpl;
 import com.bachtt.bshop.services.impl.UserServiceImpl;
@@ -18,12 +20,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +43,8 @@ public class AuthController {
     AuthenticationManager authenticationManager;
     @Autowired
     JwtProvider jwtProvider;
+    @Autowired
+    JwtTokenFilter jwtTokenFilter;
     @PostMapping("/signup")
     public ResponseEntity<?> register(@Valid @RequestBody SignUpForm signUpForm) {
         if (userService.existsByUsername(signUpForm.getUsername())) {
@@ -50,7 +53,10 @@ public class AuthController {
         if (userService.existsByEmail(signUpForm.getEmail())) {
             return new ResponseEntity<>(new ResponseMessage("The email is exists"), HttpStatus.OK);
         }
-        User user = new User(signUpForm.getName(), signUpForm.getUsername(), signUpForm.getEmail(),
+        if(signUpForm.getAvatar() == null || signUpForm.getAvatar().trim().isEmpty()){
+            signUpForm.setAvatar("https://firebasestorage.googleapis.com/v0/b/monkey-blogging-bcabf.appspot.com/o/images%2Fnhc1601440944.jpg?alt=media&token=263c5763-a922-452c-9cb2-805c6bbcf1c1");
+        }
+        User user = new User(signUpForm.getName(), signUpForm.getUsername(), signUpForm.getEmail(), signUpForm.getAvatar(),
                 passwordEncoder.encode(signUpForm.getPassword()));
         Set<String> strRoles = signUpForm.getRoles();
         Set<Role> roles = new HashSet<>();
@@ -84,6 +90,26 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtProvider.createToken(authentication);
         UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
-        return ResponseEntity.ok(new JwtResponse(token, userPrinciple.getName()  , userPrinciple.getAuthorities()));
+        return ResponseEntity.ok(new JwtResponse(token, userPrinciple.getName(), userPrinciple.getAvatar()  , userPrinciple.getAuthorities()));
+    }
+
+    @PutMapping("/change-avatar")
+    public ResponseEntity<?> changeAvatar(HttpServletRequest request, @Valid @RequestBody ChangeAvatar changeAvatar){
+        String jwt = jwtTokenFilter.getJwt(request);
+        String username = jwtProvider.getUserNameFromToken(jwt);
+        User user;
+        try{
+            if(changeAvatar.getAvatar() == null){
+                return new ResponseEntity<>(new ResponseMessage("no"), HttpStatus.OK);
+            }else{
+                user = userService.findByUsername(username).orElseThrow(()-> new UsernameNotFoundException("User not found -> username" + username));
+                user.setAvatar(changeAvatar.getAvatar());
+                userService.save(user);
+            }
+            return new ResponseEntity<>(new ResponseMessage("yes"), HttpStatus.OK);
+
+        }catch (UsernameNotFoundException e){
+            return new ResponseEntity<>(new ResponseMessage(e.getMessage()), HttpStatus.NOT_FOUND);
+        }
     }
 }

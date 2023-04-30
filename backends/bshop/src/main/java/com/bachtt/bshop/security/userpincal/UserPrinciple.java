@@ -43,6 +43,13 @@ public class UserPrinciple implements UserDetails {
     public String getName() {
         return name;
     }
+
+
+
+    public String getAvatar() {
+        return avatar;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // TODO Auto-generated method stub

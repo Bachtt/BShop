@@ -62,11 +62,13 @@ public class User {
                 @NotBlank
                 @Size(max = 50)
                 @Email String email,
+                String avatar,
                 @NotBlank
                 @Size(min = 6, max = 100) String encode) {
         this.name = name;
         this.username = username;
         this.email = email;
+        this.avatar = avatar;
         this.password = encode;
     }
 
