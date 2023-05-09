@@ -1,6 +1,7 @@
 package com.bachtt.bshop.controllers;
 
 import com.bachtt.bshop.dto.request.ChangeAvatar;
+import com.bachtt.bshop.dto.request.ChangeProfileForm;
 import com.bachtt.bshop.dto.request.SignInForm;
 import com.bachtt.bshop.dto.request.SignUpForm;
 import com.bachtt.bshop.dto.response.JwtResponse;
@@ -110,6 +111,29 @@ public class AuthController {
 
         }catch (UsernameNotFoundException e){
             return new ResponseEntity<>(new ResponseMessage(e.getMessage()), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/change-profile")
+    public ResponseEntity<?> changeProfile(HttpServletRequest request, @Valid @RequestBody ChangeProfileForm changeProfileForm){
+        String jwt = jwtTokenFilter.getJwt(request);
+        String username = jwtProvider.getUserNameFromToken(jwt);
+        User user;
+        try {
+            if(userService.existsByUsername(changeProfileForm.getUsername())){
+                return new ResponseEntity<>(new ResponseMessage("nouser"), HttpStatus.OK);
+            }
+            if(userService.existsByEmail(changeProfileForm.getEmail())){
+                return new ResponseEntity<>(new ResponseMessage("noemail"), HttpStatus.OK);
+            }
+            user = userService.findByUsername(username).orElseThrow(()-> new UsernameNotFoundException("User Not Found with -> useranme"+username));
+            user.setName(changeProfileForm.getName());
+            user.setUsername(changeProfileForm.getUsername());
+            user.setEmail(changeProfileForm.getEmail());
+            userService.save(user);
+            return new ResponseEntity<>(new ResponseMessage("yes"), HttpStatus.OK);
+        } catch (UsernameNotFoundException exception){
+            return new ResponseEntity<>(new ResponseMessage(exception.getMessage()),HttpStatus.NOT_FOUND );
         }
     }
 }
