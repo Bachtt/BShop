@@ -44,4 +44,14 @@ public class CategoryServiceImpl implements ICategoryService {
     public Optional<Category> findById(Long id) {
         return categoryRepository.findById(id);
     }
+
+    @Override
+    public Page<Category> findByNameCategoryContaining(String nameCategory, Pageable pageable) {
+        return categoryRepository.findByNameCategoryContaining(nameCategory, pageable);
+    }
+
+    @Override
+    public Page<Category> findByNameCategoryQuery(String nameCategory, Pageable pageable) {
+        return categoryRepository.findByNameCategoryQuery(nameCategory, pageable);
+    }
 }

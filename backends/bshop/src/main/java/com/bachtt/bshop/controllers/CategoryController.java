@@ -56,4 +56,23 @@ public class CategoryController {
         categoryService.deleteById(category.get().getId());
         return new ResponseEntity<>(new ResponseMessage("Delete successfully!"), HttpStatus.OK);
     }
+
+    //Cach 1: dung @PathVariable
+//    @GetMapping("/search/{nameCategory}")
+//    public ResponseEntity<?> searchByNameCategory(@PathVariable String nameCategory, @PageableDefault(sort = "nameCategory", direction = Sort.Direction.ASC)Pageable pageable){
+//        Page<Category> categoryPage = categoryService.findByNameCategoryContaining(nameCategory, pageable);
+//        if(categoryPage.isEmpty()){
+//            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//        }
+//        return new ResponseEntity<>(categoryPage, HttpStatus.OK);
+//    }
+    //Cach 2: dung @RequestParams
+    @GetMapping("/search/")
+    public ResponseEntity<?> searchByNameCategory(@RequestParam("nameCategory") String nameCategory, @PageableDefault(sort = "nameCategory", direction = Sort.Direction.ASC)Pageable pageable){
+        Page<Category> categoryPage = categoryService.findByNameCategoryQuery(nameCategory, pageable);
+        if(categoryPage.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(categoryPage, HttpStatus.OK);
+    }
 }
