@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @CrossOrigin(origins = "*")
 @RequestMapping("category")
 @RestController
@@ -43,5 +45,15 @@ public class CategoryController {
             return new ResponseEntity<>(new ResponseMessage("yes"), HttpStatus.OK);
         }
         return new ResponseEntity<>(new ResponseMessage("create failed"), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id){
+        Optional<Category> category = categoryService.findById(id);
+        if(!category.isPresent()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        categoryService.deleteById(category.get().getId());
+        return new ResponseEntity<>(new ResponseMessage("Delete successfully!"), HttpStatus.OK);
     }
 }
